@@ -467,6 +467,8 @@ func (c *testCase) prepareAddTable(cfg interface{}, taskCh chan *ddlJobTask) err
 	sql += fmt.Sprintf(") COMMENT '%s' CHARACTER SET '%s' COLLATE '%s'",
 		tableInfo.comment, charset, collate)
 
+	sql += fmt.Sprintf("; alter table `%s` set tiflash replica 1;", tableInfo.name)
+
 	task := &ddlJobTask{
 		k:       ddlAddTable,
 		sql:     sql,

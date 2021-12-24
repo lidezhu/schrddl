@@ -439,7 +439,7 @@ func (c *testCase) executeVerifyIntegrity() error {
 		table.lock.RUnlock()
 
 		// build SQL
-		sql := "SELECT "
+		sql := "set @@session.tidb_isolation_read_engines = 'tiflash'; SELECT "
 		for i, column := range columnsSnapshot {
 			if i > 0 {
 				sql += ", "
@@ -450,6 +450,32 @@ func (c *testCase) executeVerifyIntegrity() error {
 
 		dbIdx := rand.Intn(len(c.dbs))
 		db := c.dbs[dbIdx]
+
+		// wait tiflash replica available
+		for i := 0; i < 1000; i += 1 {
+			query := fmt.Sprintf("select AVAILABLE from information_schema.tiflash_replica where TABLE_ID='%s'",
+				table.id)
+			rows, err := db.Query(query)
+			if err != nil {
+				return err
+			}
+			// the table should be dropped
+			if !rows.Next() {
+				return nil
+			}
+			available := -1
+			if err := rows.Scan(&available); err != nil {
+				return err
+			}
+			log.Infof("table %s available %v", table.name, available)
+			if available == 1 {
+				break
+			}
+			if c.isStop() {
+				break
+			}
+			time.Sleep(1 * time.Second)
+		}
 
 		// execute
 		opStart := time.Now()
