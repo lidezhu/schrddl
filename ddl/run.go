@@ -50,10 +50,10 @@ func Run(dbAddr string, dbName string, concurrency int, tablesToCreate int, mysq
 		if err != nil {
 			log.Fatalf("[ddl] create db client error %v", err)
 		}
-		if _, err:= db0.Exec("SET GLOBAL tidb_multi_statement_mode='ON'"); err != nil {
+		if _, err:= db0.Exec("SET SESSION tidb_multi_statement_mode='ON'"); err != nil {
 			log.Fatalf("[ddl] create db client error %v", err)
 		}
-		if _, err:= db1.Exec("SET GLOBAL tidb_multi_statement_mode='ON'"); err != nil {
+		if _, err:= db1.Exec("SET SESSION tidb_multi_statement_mode='ON'"); err != nil {
 			log.Fatalf("[ddl] create db client error %v", err)
 		}
 		dbs = append(dbs, db0)
