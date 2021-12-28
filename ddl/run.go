@@ -39,6 +39,18 @@ func Run(dbAddr string, dbName string, concurrency int, tablesToCreate int, mysq
 	ctx, cancel := context.WithCancel(context.Background())
 	dbss := make([][]*sql.DB, 0, concurrency)
 	dbDSN := fmt.Sprintf("root:@tcp(%s)/%s", dbAddr, dbName)
+
+	db, err := OpenDB(dbDSN, 1)
+	if err != nil {
+		log.Fatalf("[ddl] create db client error %v", err)
+	}
+	if _, err:= db.Exec("SET GLOBAL tidb_multi_statement_mode='ON'"); err != nil {
+		log.Fatalf("[ddl] SET GLOBAL tidb_multi_statement_mode='ON' error %v", err)
+	}
+	if err := db.Close(); err != nil {
+		log.Fatalf("[ddl] close db client error %v", err)
+	}
+
 	for i := 0; i < concurrency; i++ {
 		dbs := make([]*sql.DB, 0, 2)
 		// Parallel send DDL request need more connection to send DDL request concurrently
@@ -48,12 +60,6 @@ func Run(dbAddr string, dbName string, concurrency int, tablesToCreate int, mysq
 		}
 		db1, err := OpenDB(dbDSN, 1)
 		if err != nil {
-			log.Fatalf("[ddl] create db client error %v", err)
-		}
-		if _, err:= db0.Exec("SET SESSION tidb_multi_statement_mode='ON'"); err != nil {
-			log.Fatalf("[ddl] create db client error %v", err)
-		}
-		if _, err:= db1.Exec("SET SESSION tidb_multi_statement_mode='ON'"); err != nil {
 			log.Fatalf("[ddl] create db client error %v", err)
 		}
 		dbs = append(dbs, db0)
